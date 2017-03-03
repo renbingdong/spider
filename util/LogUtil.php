@@ -4,10 +4,10 @@
  */
 class LogUtil {
 
-    private $log_file = "/var/log/spider/spider";
+    private $log_file = "/Users/renbingdong/log/spider";
 
     public static function info($message) {
         $log_file = $log_file . "_" . date('Y-m-d', time()) . '.log';
-        error_log($log_file, 3, $message);
+        error_log($message . '\n', 3, $log_file);
     }
 }

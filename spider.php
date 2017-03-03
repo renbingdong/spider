@@ -18,4 +18,4 @@ if ($argc == 2) {
 LogUtil::info("spider started, deep: {$traverse_deep}, main_url: {$main_url}");
 
 //开始爬行数据
-new CrawlJob($main_url, $traverse_deep)->run();
+(new CrawlJob($main_url, $traverse_deep))->run();
