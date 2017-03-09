@@ -52,7 +52,13 @@ class CrawLJob {
         if ($is_exist) {
             return;
         }
-        $contents = file_get_contents($url);
+        $opt = array(
+            "ssl" => array(
+                "verify_peer" => false,
+                "verify_peer_name" => false,
+            )
+        );
+        $contents = file_get_contents($url, false, stream_context_create($opt));
         if (strlen($contents) == 0) {
             $this->crawl_page_model->insert($url, $url_hash_code, '', '');
             return;
@@ -64,7 +70,7 @@ class CrawLJob {
             LogUtil::info("The spider has the maximum depth! ");
             return;
         }
-        $url_regex = '/<[a|A].*? href=([\'\"])([^#].*)\\1>/';
+        $url_regex = '/<[a|A][^>]* href=([\'\"])((?:http|https):\/\/[^ \'\"]*)\\1/';
         $url_sub = array();
         $times = preg_match_all($url_regex, $contents, $url_sub);
         if ($times == 0) {
@@ -77,10 +83,10 @@ class CrawLJob {
 
     private function _uploadPage($contents) {
         if (!is_dir($this->file_dir)) {
-            LogUtil::info("The default directory does not exist! dir: " . $this->file_dir);
+            LogUtil::file_info("The default directory does not exist! dir: " . $this->file_dir);
             $is_ok = mkdir($this->file_dir);
             if (!is_ok) {
-                LogUtil::info("Directory to create failure! dir: " . $this->file_dir);
+                LogUtil::file_info("Directory to create failure! dir: " . $this->file_dir);
                 return '';
             }
         }
@@ -88,10 +94,10 @@ class CrawLJob {
         $first_dir = abs(crc32($file_name)) % 10;
         $current_dir = $this->file_dir . DIRECTORY_SEPARATOR . $first_dir;
         if (!is_dir($current_dir)) {
-            LogUtil::info('Create the directory for the first time! dir: ' . $current_dir);
+            LogUtil::file_info('Create the directory for the first time! dir: ' . $current_dir);
             $is_ok = mkdir($current_dir);
             if (!is_ok) {
-                LogUtil::info('Directory to create failure! dir: ' . $current_dir);
+                LogUtil::file_info('Directory to create failure! dir: ' . $current_dir);
                 return '';
             }
         }
@@ -100,13 +106,16 @@ class CrawLJob {
         $f_length = fwrite($fh, $contents);
         fclose($fh);
         if ($f_length === false) {
-            LogUtil::info('File is written to failure! file_name: ' . $file_absolute_path);
+            LogUtil::file_info('File is written to failure! file_name: ' . $file_absolute_path);
             return '';
         }
+        LogUtil::file_info('File to create successful! file_name: ' . $file_absolute_path);
         return $file_absolute_path;
     }
 
     private function _getSummaryContext($contents) {
-        return substr($contents, 0, 200);
+        $regex_title = "/<title>(.*)<\/title>/";
+        preg_match($regex_title, $contents, $title);
+        return $title[1];
     }
 }

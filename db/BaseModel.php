@@ -11,9 +11,11 @@ class BaseModel {
         if ($this->mysqli->connect_errno) {
             LogUtil::info('the db connect failure!');
         }
+        $this->mysqli->set_charset('utf8');
     }
 
     public function query($sql) {
+        LogUtil::sql($sql);
         $mysqli_result = $this->mysqli->query($sql);
         if ($mysqli_result === false) {
             LogUtil::info('the db query failure! sql: ' . $sql);
@@ -23,7 +25,7 @@ class BaseModel {
             return true;
         }
         $result = array();
-        while (!($row = $mysqli_result->fetch_array())) {
+        while ($row = $mysqli_result->fetch_array()) {
             $result[] = $row;
         }
         $mysqli_result->free();
