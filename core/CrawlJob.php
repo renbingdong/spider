@@ -1,6 +1,7 @@
 <?php
 require_once 'util/LogUtil.php';
 require_once 'db/model/CrawlPageModel.php';
+require_once 'db/model/CrawlQueueModel.php';
 
 /*
  * 爬虫爬行链接处理类
@@ -9,22 +10,23 @@ class CrawLJob {
 
     private $url;                                       //入口url
     private $max_depth;                                 //最大爬行深度
-    private $url_queue = array();                       //爬行队列
     private $crawl_page_model;
+    private $crawl_queue_model;
     private $file_dir = '/Users/renbingdong/Page';      //默认文件存储地址
 
     public function __construct($url, $max_depth) {
         $this->url = $url;
         $this->max_depth = $max_depth;
         $this->crawl_page_model = new CrawlPageModel();
+        $this->crawl_queue_model = new CrawlQueueModel();
     }
     
     /**
      * 爬虫爬行入口方法
      */
     public function run()  {
-        $url_info = array('d_level' => 1, 'url_list' => array($this->url));
-        array_push($this->url_queue, $url_info);
+        $url_info = array('deep_level' => 1, 'url_list' => array($this->url));
+        $this->crawl_queue_model->batchInsert($url_info);   
         $this->_consumer();
     }
 
@@ -32,13 +34,11 @@ class CrawLJob {
      * 爬虫遍历爬行方法
      */
     private function _consumer() {
-        while (!empty($this->url_queue)) {
-            $url_info = array_shift($this->url_queue);
-            $url_list = $url_info['url_list'];
-            foreach ($url_list as $url) {
-                $this->_analysisUrl($url, $url_info['d_level']);           
-            }
-        }
+        do {
+            $message = $this->crawl_queue_model->getOne();
+            $this->crawl_queue_model->updateById($message['id']);
+            $this->_analysisUrl($message['url'], $message['deep_level']);
+        } while (!empty($message));
         LogUtil::info("spider crawl finish!");
     }
 
@@ -77,8 +77,8 @@ class CrawLJob {
             return;
         }
         $url_list = $url_sub[2];
-        $url_info = array('d_level' => $level + 1, 'url_list' => $url_list);
-        array_push($this->url_queue, $url_info);
+        $url_info = array('deep_level' => $level + 1, 'url_list' => $url_list);
+        $this->crawl_queue_model->batchInsert($url_info);
     }
 
     private function _uploadPage($contents) {
@@ -91,7 +91,7 @@ class CrawLJob {
             }
         }
         $file_name = md5($contents);
-        $first_dir = abs(crc32($file_name)) % 10;
+        $first_dir = abs(crc32($file_name)) % 256;
         $current_dir = $this->file_dir . DIRECTORY_SEPARATOR . $first_dir;
         if (!is_dir($current_dir)) {
             LogUtil::file_info('Create the directory for the first time! dir: ' . $current_dir);
