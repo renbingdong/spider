@@ -1,5 +1,8 @@
 <?php
 require_once 'util/LogUtil.php';
+require_once 'util/HttpClient.php';
+require_once 'util/FileUtil.php';
+require_once 'util/TimeUtil.php';
 require_once 'db/model/CrawlPageModel.php';
 require_once 'db/model/CrawlQueueModel.php';
 
@@ -12,7 +15,6 @@ class CrawLJob {
     private $max_depth;                                 //最大爬行深度
     private $crawl_page_model;
     private $crawl_queue_model;
-    private $file_dir = '/Users/renbingdong/Page';      //默认文件存储地址
 
     public function __construct($url, $max_depth) {
         $this->url = $url;
@@ -35,9 +37,13 @@ class CrawLJob {
      */
     private function _consumer() {
         do {
+            $start_time = TimeUtil::getMsecTime();
             $message = $this->crawl_queue_model->getOne();
             $this->crawl_queue_model->updateById($message['id']);
             $this->_analysisUrl($message['url'], $message['deep_level']);
+            $end_time = TimeUtil::getMsecTime();
+            $exec_time = $end_time - $start_time;
+            LogUtil::info_time('Total analysis time: ' . $exec_time . 'ms. url: ' . $message['url']);
         } while (!empty($message));
         LogUtil::info("spider crawl finish!");
     }
@@ -52,18 +58,11 @@ class CrawLJob {
         if ($is_exist) {
             return;
         }
-        $opt = array(
-            "ssl" => array(
-                "verify_peer" => false,
-                "verify_peer_name" => false,
-            )
-        );
-        $contents = file_get_contents($url, false, stream_context_create($opt));
+        $contents = HttpClient::get($url);
         if (strlen($contents) == 0) {
-            $this->crawl_page_model->insert($url, $url_hash_code, '', '');
             return;
         }
-        $file_path = $this->_uploadPage($contents);
+        $file_path = FileUtil::upload($contents);
         $summary_context = $this->_getSummaryContext($contents);
         $this->crawl_page_model->insert($url, $url_hash_code, $summary_context, $file_path);
         if ($level >= $this->max_depth) {
@@ -81,41 +80,15 @@ class CrawLJob {
         $this->crawl_queue_model->batchInsert($url_info);
     }
 
-    private function _uploadPage($contents) {
-        if (!is_dir($this->file_dir)) {
-            LogUtil::file_info("The default directory does not exist! dir: " . $this->file_dir);
-            $is_ok = mkdir($this->file_dir);
-            if (!is_ok) {
-                LogUtil::file_info("Directory to create failure! dir: " . $this->file_dir);
-                return '';
-            }
-        }
-        $file_name = md5($contents);
-        $first_dir = abs(crc32($file_name)) % 256;
-        $current_dir = $this->file_dir . DIRECTORY_SEPARATOR . $first_dir;
-        if (!is_dir($current_dir)) {
-            LogUtil::file_info('Create the directory for the first time! dir: ' . $current_dir);
-            $is_ok = mkdir($current_dir);
-            if (!is_ok) {
-                LogUtil::file_info('Directory to create failure! dir: ' . $current_dir);
-                return '';
-            }
-        }
-        $file_absolute_path = $current_dir . DIRECTORY_SEPARATOR . $file_name . '.html';
-        $fh = fopen($file_absolute_path, 'a+');
-        $f_length = fwrite($fh, $contents);
-        fclose($fh);
-        if ($f_length === false) {
-            LogUtil::file_info('File is written to failure! file_name: ' . $file_absolute_path);
-            return '';
-        }
-        LogUtil::file_info('File to create successful! file_name: ' . $file_absolute_path);
-        return $file_absolute_path;
-    }
-
     private function _getSummaryContext($contents) {
         $regex_title = "/<title>(.*)<\/title>/";
         preg_match($regex_title, $contents, $title);
-        return $title[1];
+        $summary_context = $title[1];
+        $regex_charset = "/<meta[^>]+?charset=[^\w]?([-\w]+)/i";
+        preg_match($regex_charset, $contents, $charset);
+        if (!empty($charset)) {
+            $summary_context = mb_convert_encoding($summary_context, 'utf-8', $charset);
+        }
+        return $summary_context;
     }
 }

@@ -23,9 +23,6 @@ class CrawlPageModel extends BaseModel {
         $now = time();
         $sql .= "('{$url}', '{$url_hash_code}', '{$summary_context}', '{$file_path}', {$now})";
         $result = $this->query($sql);
-        if (!$result) {
-            LogUtil::info('the page insert failure! sql: ' . $sql);       
-        }
         return $result;
     }
 
