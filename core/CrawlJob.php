@@ -89,6 +89,7 @@ class CrawLJob {
         if (!empty($charset)) {
             $summary_context = mb_convert_encoding($summary_context, 'utf-8', $charset);
         }
+        $summary_context = addslashes($summary_context);
         return $summary_context;
     }
 }
