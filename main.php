@@ -15,7 +15,6 @@ if ($argc == 2) {
     $traverse_deep = $argv[0];
     $main_url = $argv[1];
 }
-LogUtil::info("spider started, deep: {$traverse_deep}, main_url: {$main_url}");
 
 //开始爬行数据
 (new CrawlJob($main_url, $traverse_deep))->run();

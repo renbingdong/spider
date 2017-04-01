@@ -53,4 +53,10 @@ class LogUtil {
         $message = date('Y-m-d H:i:s') . ': ' . $message;
         error_log($message . PHP_EOL, 3, $log_file);
     }
+
+    public static function process($message) {
+        $log_file = self::$log_file . DIRECTORY_SEPARATOR . "spider_process_" . date('Y-m-d', time()) . '.log';
+        $message = date('Y-m-d H:i:s') . ': ' . $message;
+        error_log($message . PHP_EOL, 3, $log_file);
+    }
 }

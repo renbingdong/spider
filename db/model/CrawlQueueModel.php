@@ -38,6 +38,16 @@ class CrawlQueueModel extends BaseModel {
         return current($result);
     }
 
+    public function hasNext() {
+        $sql = "select count(1) as cont from {$this->table_name} where is_crawl = 0";
+        $result = $this->query($sql);
+        $result = current($result);
+        if ($result['cont'] > 0) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * 更新爬行队列信息
      */
