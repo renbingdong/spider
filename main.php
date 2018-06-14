@@ -4,8 +4,20 @@
  */
 
 date_default_timezone_set("Asia/Shanghai");
-require_once 'util/LogUtil.php';
-require_once 'core/CrawlJob.php';
+
+function autoload($class) {
+    $file = str_replace('\\', '/', $class);
+    $fileName = __DIR__ . '/' . $file;
+    if (file_exists($fileName)) {
+        require "{$fileName}.php";
+    }
+}
+spl_autoload_register("autoload");
+
+$dbConfig = require __DIR__ . '/config/db.php';
+$otherConfig = require __DIR__ . '/config/config.php';
+$config = array_merge($dbConfig, $otherConfig);
+
 
 //爬虫默认遍历深度
 $traverse_deep = 10;
@@ -17,4 +29,4 @@ if ($argc == 2) {
 }
 
 //开始爬行数据
-(new CrawlJob($main_url, $traverse_deep))->run();
+(new \core\CrawlJob($main_url, $traverse_deep))->run();

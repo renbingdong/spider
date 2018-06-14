@@ -1,12 +1,11 @@
 <?php
-require_once __dir__ . DIRECTORY_SEPARATOR . 'Pool.php';
-require_once 'core/Process.php';
-require_once 'util/LogUtil.php';
+namespace lib\mutil;
+use \util\LogUtil;
 
 class Master {
     private $pool;          //线程池
-    private $has_next;      //是否有下一个任务（任务是否完成）
-    private $get_task;      //获取任务
+    private $hasNext;       //是否有下一个任务（任务是否完成）
+    private $getTask;       //获取任务
     private $consumer;      //消费任务方法
 
     public function __construct($properties) {
@@ -19,7 +18,7 @@ class Master {
      * 初始化工作
      */
     public function init() {
-        $this->pool = new Pool(10);
+        $this->pool = new \lib\mutilProcess\Pool(10);
         $this->pool->setConsumer($this->consumer);
         $this->pool->initPool();
     }
@@ -30,7 +29,6 @@ class Master {
             $data = 'data:'. $data;
             $this->pool->dispatch($data);
         }
-        LogUtil::process('Start recycling process.');
         $this->pool->recyclePool();
         LogUtil::process('mutil-processing work finish!');
     }

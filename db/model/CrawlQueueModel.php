@@ -1,6 +1,5 @@
 <?php
-require_once 'db/BaseModel.php';
-require_once 'util/LogUtil.php';
+namespace db\model;
 
 class CrawlQueueModel extends BaseModel {
     protected $table_name='crawl_queue';

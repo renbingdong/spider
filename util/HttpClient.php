@@ -1,5 +1,5 @@
 <?php
-require_once 'util/LogUtil.php';
+namespace util;
 
 /**
  * http请求处理类

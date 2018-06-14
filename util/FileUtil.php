@@ -1,59 +1,62 @@
 <?php
-require_once 'util/LogUtil.php';
-require_once 'util/TimeUtil.php';
+namespace util;
 
 class FileUtil {
 
-    private static $file_dir = '/Users/renbingdong/Page';
+    private static function getFileDir() {
+        $fileDir = $config['file_dir'];
+        return $fileDir;
+    }
 
     public static function upload($contents) {
-        $start_time = TimeUtil::getMsecTime();
+        $startTime = TimeUtil::getMsecTime();
         $result = self::_upload($contents);
-        $end_time = TimeUtil::getMsecTime();
-        $upload_time = $end_time - $start_time;
-        LogUtil::file_time('File upload time: ' . $upload_time . 'ms. file_name: ' . $result);
+        $endTime = TimeUtil::getMsecTime();
+        $uploadTime = $endTime - $startTime;
+        LogUtil::fileTime('File upload time: ' . $uploadTime . 'ms. file_name: ' . $result);
         return $result;
     }
 
     private static function _upload($contents) {
-        if (!is_dir(self::$file_dir)) { 
-            LogUtil::file_info("The default directory does not exist! dir: " . self::$file_dir);
-            $is_ok = mkdir(self::$file_dir);
-            if (!is_ok) {
-                LogUtil::file_info("Directory to create failure! dir: " . self::$file_dir);
+        $fileDir = getFileDir();
+        if (!is_dir($fileDir)) { 
+            LogUtil::fileInfo("The default directory does not exist! dir: " . $fileDir);
+            $isOk = mkdir($fileDir);
+            if (!isOk) {
+                LogUtil::fileInfo("Directory to create failure! dir: " . $fileDir);
                 return '';
             }
         }
-        $file_name = md5($contents);
-        $first_dir = abs(crc32($file_name)) % 256;
-        $second_dir = abs(crc32(md5($file_name))) % 1024;
-        $current_dir = self::$file_dir . DIRECTORY_SEPARATOR . $first_dir;
-        if (!is_dir($current_dir)) {
-            LogUtil::file_info('Create the directory for the first time! dir: ' . $current_dir);
-            $is_ok = mkdir($current_dir);
-            if (!is_ok) {
-                LogUtil::file_info('Directory to create failure! dir: ' . $current_dir);
+        $fileName = md5($contents);
+        $firstDir = abs(crc32($fileName)) % 256;
+        $secondDir = abs(crc32(md5($fileName))) % 1024;
+        $currentDir = $fileDir . DIRECTORY_SEPARATOR . $firstDir;
+        if (!is_dir($currentDir)) {
+            LogUtil::fileInfo('Create the directory for the first time! dir: ' . $currentDir);
+            $isOk = mkdir($currentDir);
+            if (!isOk) {
+                LogUtil::fileInfo('Directory to create failure! dir: ' . $currentDir);
                 return '';
             }
         }
-        $current_dir = $current_dir . DIRECTORY_SEPARATOR . $second_dir;
-        if (!is_dir($current_dir)) {
-            LogUtil::file_info('Create the directory for the first time! dir: ' . $current_dir);
-            $is_ok = mkdir($current_dir);
-            if (!is_ok) {
-                LogUtil::file_info('Directory to create failure! dir: ' . $current_dir);
+        $currentDir = $currentDir . DIRECTORY_SEPARATOR . $secondDir;
+        if (!is_dir($currentDir)) {
+            LogUtil::fileInfo('Create the directory for the first time! dir: ' . $currentDir);
+            $isOk = mkdir($currentDir);
+            if (!isOk) {
+                LogUtil::fileInfo('Directory to create failure! dir: ' . $currentDir);
                 return '';
             }
         }
-        $file_absolute_path = $current_dir . DIRECTORY_SEPARATOR . $file_name . '.html';
-        $fh = fopen($file_absolute_path, 'a+');
-        $f_length = fwrite($fh, $contents);
+        $fileAbsolutePath = $currentDir . DIRECTORY_SEPARATOR . $fileName . '.html';
+        $fh = fopen($fileAbsolutePath, 'a+');
+        $fLength = fwrite($fh, $contents);
         fclose($fh);
-        if ($f_length === false) {
-            LogUtil::file_info('File is written to failure! file_name: ' . $file_absolute_path);
+        if ($fLength === false) {
+            LogUtil::fileInfo('File is written to failure! file_name: ' . $fileAbsolutePath);
             return '';
         }
-        LogUtil::file_info('File to create successful! file_name: ' . $file_absolute_path);
-        return $file_absolute_path;
+        LogUtil::fileInfo('File to create successful! file_name: ' . $fileAbsolutePath);
+        return $fileAbsolutePath;
     }
 }

@@ -1,6 +1,5 @@
 <?php
-require_once 'db/BaseModel.php';
-require_once 'util/LogUtil.php';
+namespace db\model;
 
 class CrawlPageModel extends BaseModel {
     protected $table_name='crawl_page';
@@ -9,8 +8,8 @@ class CrawlPageModel extends BaseModel {
         parent::__construct();
     }
 
-    public function isExist($url_hash_code) {
-        $sql = "select 1 from {$this->table_name} where url_hash_code = '{$url_hash_code}'";
+    public function isExist($urlHashCode) {
+        $sql = "select 1 from {$this->table_name} where url_hash_code = '{$urlHashCode}'";
         $result = $this->query($sql);
         if (empty($result)) {
             return false;
@@ -18,10 +17,10 @@ class CrawlPageModel extends BaseModel {
         return true;
     }
 
-    public function insert($url, $url_hash_code, $summary_context, $file_path) {
+    public function insert($url, $urlHashCode, $summaryContext, $filePath) {
         $sql = "insert into {$this->table_name} (`url`, `url_hash_code`, `page_summary_context`, `page_file_path`, `c_t`) values ";
         $now = time();
-        $sql .= "('{$url}', '{$url_hash_code}', '{$summary_context}', '{$file_path}', {$now})";
+        $sql .= "('{$url}', '{$urlHashCode}', '{$summaryContext}', '{$filePath}', {$now})";
         $result = $this->query($sql);
         return $result;
     }
