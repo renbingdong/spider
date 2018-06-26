@@ -26,7 +26,7 @@ class CrawlPageModel extends BaseModel {
     }
 
     public function get($params) {
-        $sql = "select url_hash_code from {$this->table_name} where url_hash_code in (" . join(',', $params['url_hash_list']) . ")";
+        $sql = "select url_hash_code from {$this->table_name} where url_hash_code in ('" . join("','", $params['url_hash_list']) . "')";
         $result = $this->query($sql);
         return $result;
     }

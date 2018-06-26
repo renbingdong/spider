@@ -56,7 +56,7 @@ class Process {
                 unset($urlList[$key]);
             }
         }
-        $urlList = array_value($urlList);
+        $urlList = array_values($urlList);
         CrawlQueue::pushTask($urlList);
     }
 
