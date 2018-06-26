@@ -11,28 +11,21 @@ use \util\TimeUtil;
 class CrawlJob {
 
     private $url;                                       //入口url
-    private $maxDepth;                                 //最大爬行深度
+    private $processNum;                                //进程数量
 
-    public function __construct($url, $maxDepth) {
+    public function __construct($url, $processNum) {
         $this->url = $url;
-        $this->maxDepth = $maxDepth;
+        $this->processNum = $processNum;
     }
     
     /**
      * 爬虫爬行入口方法
      */
     public function run()  {
-        LogUtil::info("spider started, deep: {$this->maxDepth}, main_url: {$this->url}");
-        $url_info = array('deep_level' => 1, 'url_list' => array($this->url));
-        $crawlQueueModel = new \db\model\crawlQueueModel();
-        $crawlQueueModel->batchInsert($url_info); 
-        $properties = array(
-            'has_next' => array('class' => 'Process', 'method' => 'hasNext'),
-            'get_task' => array('class' => 'Process', 'method' => 'getTask'),
-            'consumer' => array('class' => 'Process', 'method' => 'consumer'),
-        );
-        $master = new \lib\mutilProcess\Master($properties);
-        sleep(5);
+        LogUtil::info("spider started, process_num: {$this->processNum}, main_url: {$this->url}");
+        $urlLst = array($this->url);
+        CrawlQueue::pushTask($urlLst);
+        $master = new \lib\mutil\Master($this->processNum);
         $master->run();
         LogUtil::info("spider crawl finish!");
     }

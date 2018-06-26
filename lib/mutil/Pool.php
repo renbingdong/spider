@@ -1,5 +1,6 @@
 <?php
-namespace lib\mutilProcess;
+namespace lib\mutil;
+use \util\LogUtil;
 
 /**
  * 进程池  维护worker进程信息
@@ -7,15 +8,12 @@ namespace lib\mutilProcess;
 class Pool {
     private $initSize;      //初始化worker进程数量
     private $pipePool;      //管道池
-    private $conusmer;      //consumer任务
+    private $pidPool;       //进程池
 
     public function __construct($initSize = 5) {
         $this->initSize = $initSize;        
         $this->pipePool = array();
-    }
-
-    public function setConsumer($consumer) {
-        $this->consumer = $consumer;
+        $this->pidPool = array();
     }
 
     /**
@@ -23,23 +21,26 @@ class Pool {
      */
     public function initPool() {
         LogUtil::process('Start creating process.');
+        $processNum = 0;
         for ($i = 0; $i < $this->initSize; $i++) {
             $pid = pcntl_fork();
             if ($pid == -1) {
                 LogUtil::process('Process creation failed.');
                 continue;
             } elseif ($pid == 0) {
-                $worker = new \lib\mutilProcess\Worker();
-                $worker->setConsumer($this->consumer);
+                $worker = new Worker();
                 $worker->run();
                 exit;
             } else {
+                $processNum ++;
                 Queue::freeWorker($pid);
                 $m2wPipe = new Pipe($pid, 'm2w');
                 $this->pipePool[$pid] = array('m2worker' => $m2wPipe);
+                $this->pidPool[$pid] = $pid;
                 LogUtil::process("Process {$pid} creation success.");
             }
-        }        
+        }
+        Queue::initSize($processNum);
     }
 
     /**
@@ -47,7 +48,7 @@ class Pool {
      */
     public function dispatch($data) {
         $pid = $this->getFreeWorker();
-        LogUtil::process("dispatch worker {$pid}, data: {$data}");
+        //LogUtil::process("dispatch worker {$pid}, data: {$data}");
         $m2wPipe = $this->pipePool[$pid]['m2worker'];
         $m2wPipe->write($data);    
     }
@@ -59,7 +60,7 @@ class Pool {
         while (1) {
             $pid = Queue::getWorker();
             if ($pid) {
-                return $pid
+                return $pid;
             } else {
                 usleep(10);        
             }
@@ -71,5 +72,29 @@ class Pool {
      * 进程执行结束，回收进程
      */
     public function recyclePool() {
+        //  回收worker信息
+        foreach ($this->pidPool as $pid) {
+             // 管道推送终止消息
+             $m2wPipe = $this->pipePool[$pid]['m2worker'];
+             $data = "cmd:stop";
+             $m2wPipe->write($data);
+             // 回收pipe资源
+             usleep(10);
+             $m2wPipe->recycle();
+        }
+        //  回收queue信息
+        Queue::free();
+
+
+        while (count($this->pidPool) > 0) {
+            foreach ($this->pidPool as $key => $pid) {
+                $res = pcntl_waitpid($pid, $status);
+                if ($res == $pid) {
+                    unset($this->pidPool[$key]);
+                    LogUtil::process("process {$pid} stop.");
+                }
+            }
+        }
+
     }
 }

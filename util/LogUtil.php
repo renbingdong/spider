@@ -7,6 +7,7 @@ namespace util;
 class LogUtil {
 
     private static function getLogFile() {
+        $config = ConfigUtil::getConfig();
         $logFile = $config['log_file'];
         return $logFile;
     }

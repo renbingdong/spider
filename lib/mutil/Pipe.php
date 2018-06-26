@@ -1,5 +1,6 @@
 <?php
 namespace lib\mutil;
+use \util\ConfigUtil;
 
 /**
  * 管道类  进程间通信
@@ -10,6 +11,7 @@ class Pipe {
     private $rPipe;        //管道读端
 
     public function __construct($pid, $name, $mode = 0666) {
+        $config = ConfigUtil::getConfig();
         $fifoName = $config['pipe'] . "/{$name}_pipe.{$pid}";
         if (file_exists($fifoName)) {
             $this->fifoName = $fifoName;

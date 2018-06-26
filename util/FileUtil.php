@@ -4,6 +4,7 @@ namespace util;
 class FileUtil {
 
     private static function getFileDir() {
+        $config = ConfigUtil::getConfig();
         $fileDir = $config['file_dir'];
         return $fileDir;
     }
@@ -18,7 +19,7 @@ class FileUtil {
     }
 
     private static function _upload($contents) {
-        $fileDir = getFileDir();
+        $fileDir = self::getFileDir();
         if (!is_dir($fileDir)) { 
             LogUtil::fileInfo("The default directory does not exist! dir: " . $fileDir);
             $isOk = mkdir($fileDir);
@@ -34,7 +35,7 @@ class FileUtil {
         if (!is_dir($currentDir)) {
             LogUtil::fileInfo('Create the directory for the first time! dir: ' . $currentDir);
             $isOk = mkdir($currentDir);
-            if (!isOk) {
+            if (!$isOk) {
                 LogUtil::fileInfo('Directory to create failure! dir: ' . $currentDir);
                 return '';
             }
@@ -43,7 +44,7 @@ class FileUtil {
         if (!is_dir($currentDir)) {
             LogUtil::fileInfo('Create the directory for the first time! dir: ' . $currentDir);
             $isOk = mkdir($currentDir);
-            if (!isOk) {
+            if (!$isOk) {
                 LogUtil::fileInfo('Directory to create failure! dir: ' . $currentDir);
                 return '';
             }

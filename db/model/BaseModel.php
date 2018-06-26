@@ -2,13 +2,15 @@
 namespace db\model;
 use \util\LogUtil;
 use \util\TimeUtil;
+use \util\ConfigUtil;
 
 class BaseModel {
     protected $mysqli;
     
     public function __construct($dbName='spider') {
+        $config = ConfigUtil::getConfig();
         $database = $config['databases'][$dbName];
-        $this->mysqli = new mysqli($database['host'], $database['user'], $database['passwd'], $db_name, $database['port']);
+        $this->mysqli = new \mysqli($database['host'], $database['user'], $database['passwd'], $dbName, $database['port']);
         if ($this->mysqli->connect_errno) {
             LogUtil::sqlError('the db connect failure! error_info: ' . $this->mysqli->connect_error);
             exit;

@@ -3,10 +3,10 @@
 return array(
     'databases' => array(
         'spider' => array(
-            'host' => '127.0.0.1',
+            'host' => '192.168.119.22',
             'port' => '3306',
-            'user' => 'root',
-            'passwd' => '123456'
+            'user' => 'spider',
+            'passwd' => 'Spi@1234!'
         )
     )
 );
